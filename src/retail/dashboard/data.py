@@ -101,6 +101,28 @@ class LiveStore:
         )
 
 
+    def latest_quality_run(self) -> pd.DataFrame:
+        return self._frame(
+            """
+            SELECT run_id, ran_at, layer, check_name, status, observed, expected, details
+            FROM dq_results
+            WHERE run_id = (SELECT run_id FROM dq_results ORDER BY ran_at DESC LIMIT 1)
+            ORDER BY CASE status WHEN 'fail' THEN 0 WHEN 'warn' THEN 1 ELSE 2 END, layer
+            """
+        )
+
+    def quality_runs(self, limit: int = 10) -> pd.DataFrame:
+        return self._frame(
+            """
+            SELECT ran_at, count(*) FILTER (WHERE status = 'pass')::int AS pass,
+                   count(*) FILTER (WHERE status = 'warn')::int AS warn,
+                   count(*) FILTER (WHERE status = 'fail')::int AS fail
+            FROM dq_results GROUP BY run_id, ran_at ORDER BY ran_at DESC LIMIT %(limit)s
+            """,
+            {"limit": limit},
+        )
+
+
 class GoldLake:
     TABLES = ("sales_daily", "store_daily", "sales_monthly")
 

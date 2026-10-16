@@ -1,10 +1,53 @@
 # Retail Data Platform
 
-A supermarket data platform: invoices stream through Kafka and Spark into
-live per-store stock in Postgres, while batch jobs build a Delta Lake for
-history and analytics.
+A supermarket data platform built end to end on a laptop: invoices stream through
+**Kafka** and **Spark Structured Streaming** into live per-store stock in
+**Postgres**, batch jobs build a **Delta Lake** (bronze → silver → gold) for
+history, a **Streamlit** dashboard shows both, and a **FastAPI** service answers
+questions like *"How many milks were sold last quarter?"* using hybrid search over
+**pgvector**.
 
-> Work in progress — built phase by phase. Status: **Phase 5, step 1 (search and template Q&A) complete.**
+**Stack:** Python 3.12 · PySpark 4.0 ·
+Delta Lake 4.0 · Kafka 4.0 (KRaft) · Postgres 17 + pgvector · DuckDB · FastAPI · Streamlit
+
+## Architecture
+
+```mermaid
+flowchart LR
+    sim[Live simulator] -->|invoices, price-updates,<br/>stock-receipts| kafka[(Kafka)]
+    hist[History generator] -->|daily JSONL files| raw[(Raw files)]
+    kafka --> stream[Spark Structured Streaming]
+    stream -->|one transaction per batch| pg[(Postgres<br/>live stock, prices, sales)]
+    stream -->|idempotent append| bronze
+    raw --> bronze[Bronze]
+    subgraph lake [Delta Lake]
+        bronze --> silver[Silver] --> gold[Gold]
+    end
+    pg --> dash[Streamlit dashboard]
+    gold -->|DuckDB| dash
+    gold -->|DuckDB| api[FastAPI /ask, /search]
+    pg -->|read-only, pgvector| api
+    api --> dash
+    dq[Data-quality checks] -.-> silver & gold & pg
+```
+
+## What this demonstrates
+
+- **Exactly-once effects without distributed transactions.** A replayed Spark
+  micro-batch changes nothing: Postgres writes are claimed in ledgers inside one
+  transaction, and Delta appends are keyed on the batch id. Tested with `kill -9`
+  mid-stream ([details](#streaming-kafka--spark--postgres--delta)).
+- **One event contract for batch and streaming.** Historical files and Kafka carry
+  the same validated JSON, so bronze ingests both with one schema.
+- **Numbers that prove themselves.** Reconciliation checks tie gold back to silver
+  and bronze to the paisa, Postgres stock back to every Kafka event, and a
+  data-quality suite with planted-fault tests guards each layer.
+- **Honest question answering.** Dates are computed in code, products resolved by
+  hybrid search (literal first, embeddings as a fallback), and every answer shows
+  the products it counted and the SQL it ran.
+- **Laptop-sized engineering.** 16 GB MacBook Air: Spark runs natively with 8
+  shuffle partitions, Docker holds only Kafka and Postgres, DuckDB serves reads
+  without starting a JVM.
 
 ## Prerequisites (macOS, Apple Silicon)
 
@@ -19,26 +62,26 @@ Spark runs natively (not in Docker) to save memory.
 ## Quick start
 
 ```bash
-make up          # Kafka (KRaft) + Postgres, waits until healthy
-make db-migrate  # only for a database created before phase 5
+make up            # Kafka (KRaft) + Postgres with pgvector, waits until healthy
+make topics        # invoices, price-updates, stock-receipts
+make install       # .venv on Python 3.12
+make seed          # 3 stores, 200 products, 12 months of price history, opening stock
 make search-index  # embed the product catalogue into pgvector
-make topics      # invoices, price-updates, stock-receipts
-make install     # .venv on Python 3.12
-make seed        # 3 stores, 200 products, 12 months of price history, opening stock
-make history     # ~370k historical invoices -> data/raw/invoices/YYYY-MM/STORE-DATE.jsonl.gz
-make lake        # Spark: dims -> bronze -> silver -> gold -> reconciliation (~35s)
+make history       # ~370k historical invoices -> data/raw/invoices/YYYY-MM/STORE-DATE.jsonl.gz
+make lake          # Spark: dims -> bronze -> silver -> gold -> reconciliation (~35s)
+make quality       # data-quality checks; results feed the dashboard's Health tab
 
-# streaming: two terminals
-make stream      # Spark Structured Streaming: Kafka -> Postgres + bronze
-make simulate    # live invoices, price changes and restocks to Kafka (Ctrl-C to stop)
-make stream-check  # every Kafka event applied exactly once? stock reconciles?
-make api         # FastAPI on http://localhost:8000 (docs at /docs), used by the Ask tab
-make dashboard   # Streamlit on http://localhost:8501
-make peek TOPIC=invoices N=3   # newest messages on a topic
-make test        # or make test-fast to skip the Spark tests
+# then, each in its own terminal
+make stream        # Spark Structured Streaming: Kafka -> Postgres + bronze
+make simulate      # live invoices, price changes and restocks (Ctrl-C to stop)
+make api           # FastAPI on http://localhost:8000 (docs at /docs)
+make dashboard     # Streamlit on http://localhost:8501
 ```
 
-`make down` stops everything; `make reset` also deletes the data.
+Also: `make stream-check` (Kafka vs Postgres reconciliation), `make peek TOPIC=invoices N=3`,
+`make check` (lint + all tests), `make test-fast` (skip Spark tests). `make down` stops
+everything; `make reset` also deletes the data. For a database created by an
+earlier version of this repo, run `make db-migrate` once.
 
 ## Data
 
@@ -138,7 +181,7 @@ deadlock; with several writers you would lock rows in key order first.
 ![Live tab](docs/images/dashboard-live.png)
 
 `make dashboard` → http://localhost:8501. One filter row (stores, history
-range) scopes both tabs.
+range) scopes the Live and History tabs.
 
 - **Live** (Postgres, refreshes every 5s): revenue, invoices and average basket
   today; revenue by store; top products; stock alerts (⚠️ low, ⛔ out or
@@ -149,7 +192,7 @@ range) scopes both tabs.
 
 It connects as **`retail_reader`**, a role that is read-only at the database
 level (`default_transaction_read_only`, 5s `statement_timeout`), the same role
-the Q&A layer will use.
+the Q&A layer uses.
 
 Charts follow one set of rules: each store keeps one colour everywhere (a
 palette checked for colour-blind separation in light and dark mode), charts not
@@ -162,7 +205,7 @@ than an automatic inversion.
 ![History tab, dark mode](docs/images/dashboard-history-dark.png)
 </details>
 
-## Semantic search and Q&A (no LLM yet)
+## Semantic search and Q&A (no LLM)
 
 ![Ask tab](docs/images/dashboard-ask.png)
 
@@ -194,12 +237,60 @@ Postgres runs a small custom image (`docker/postgres`): the same Alpine Postgres
 with pgvector compiled in, because switching an existing data volume to the
 Debian-based pgvector image would change text collation (musl vs glibc).
 
+## Data quality and monitoring
+
+`make quality` ([`ops/quality.py`](src/retail/ops/quality.py)) runs a dozen checks
+in a few seconds (DuckDB over Delta, plus Postgres) and stores the results in
+`dq_results`. **fail** means the data is wrong and exits non-zero for a scheduler
+to alert on; **warn** means it needs a look.
+
+| Layer | Check | Level |
+|---|---|---|
+| Silver | No null keys or values; every product and store exists | fail |
+| Silver | Sale prices within 50–150% of list price; no rejected invoices | warn |
+| Gold | Includes yesterday (freshness) | warn |
+| Gold | No missing store-days in the last 90 days | fail |
+| Gold | Daily invoice volume within 3σ of the 28-day norm | warn |
+| Gold | Gold revenue equals silver | fail |
+| Live | Stock = opening − sold + received; price history contiguous | fail |
+| Live | No negative stock | warn |
+| Stream | Fewer than 1,000 messages behind Kafka; job running if messages wait | warn |
+
+Each check has a test that plants the fault it exists to catch. The dashboard's
+**Health** tab shows stream lag per topic (Spark checkpoint offsets vs Kafka high
+watermarks), when the stream last committed a batch, when gold was built, and the
+latest quality run.
+
+## Operations
+
+| Situation | What to do |
+|---|---|
+| Daily routine | `make history` (new days only) → `make lake` → `make quality` |
+| Health tab shows stream lag growing | Is `make stream` running? It resumes from its checkpoint and catches up in `--max-offsets` steps |
+| Streaming job crashed | Just restart it: the unfinished batch is replayed and the ledgers skip what was already applied |
+| Gold looks stale | `make lake`; for a quick refresh, `uv run python -m retail.lake.run gold --from-date YYYY-MM-DD` |
+| A quality check fails | Its row in the Health tab names an example (product, store-day); `make lake-check` and `make stream-check` give the full reconciliation |
+| Start over | `make reset && make lake-reset`, then the quick start |
+
+Caveat worth knowing: deleting the streaming checkpoint without resetting the
+lake makes Spark number batches from 0 again, and Delta then skips bronze appends
+whose batch ids it has already seen. Postgres stays correct (the ledgers are keyed
+on invoice lines, not batch ids), but reset the lake too.
+
+## CI
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs `ruff` and the full test
+suite (77 tests: Spark, Postgres and embedding-model tests included) against a
+pgvector Postgres service, with Spark packages and the model cached between runs.
+Kafka isn't needed: streaming tests feed hand-built batches to the foreachBatch
+function.
+
 ## Design notes
 
 - **Stock is per store** — `inventory_current` is keyed on `(store_id, product_id)`.
 - **Negative stock is allowed and flagged**, not clamped: it means sales were
   recorded faster than deliveries, which is information worth keeping.
-- **Idempotency ledger** — `processed_lines (invoice_id, line_no)` will let the
+- **Idempotency ledger** — `processed_lines (invoice_id, line_no)` lets the
   streaming job skip lines from a replayed micro-batch.
 - **Invoices are keyed by invoice_id**, not store: three store keys hashed onto a
   single partition, and stock changes add up, so there's no ordering to preserve.
@@ -207,7 +298,7 @@ Debian-based pgvector image would change text collation (musl vs glibc).
 ## Layout
 
 ```
-docker-compose.yml          Kafka + Postgres
+docker-compose.yml          Kafka + Postgres (pgvector)
 sql/init/                   Postgres schema, applied on first start
 seeds/                      Product master and stores (CSV)
 src/retail/
@@ -225,8 +316,11 @@ src/retail/
   search/                   Embeddings (fastembed), pgvector indexing, hybrid resolver
   qa/                       Period resolver, question parser, query templates, answers
   api/main.py               FastAPI: /search, /ask
+  ops/                      Data-quality checks, stream lag and freshness monitoring
   peek.py                   Newest messages on a topic
+docker/postgres/            Postgres 17 (Alpine) + pgvector image
 tests/                      Spark and Postgres tests use throwaway lakes and databases
+.github/workflows/ci.yml    Lint + full test suite
 ```
 
 ## Roadmap
@@ -235,5 +329,9 @@ tests/                      Spark and Postgres tests use throwaway lakes and dat
 2. ~~Batch~~ — bronze / silver / gold Delta tables with reconciliation
 3. ~~Streaming~~ — Spark Structured Streaming into Postgres stock and Delta
 4. ~~Dashboard~~ — Streamlit: live stock, low-stock alerts, sales, price changes
-5. Semantic search and Q&A — ~~step 1: hybrid search + template Q&A~~; step 2: local LLM text-to-SQL (Ollama)
-6. Hardening — data quality checks, monitoring, CI
+5. ~~Semantic search and Q&A~~ — hybrid search + template Q&A, no LLM
+6. ~~Hardening~~ — data-quality suite, Health tab, CI, runbook
+
+Possible next steps: free-form questions via a local LLM (Ollama, text-to-SQL on the
+read-only role), MinIO/S3 object storage for the lake, and an orchestrator
+(Airflow or Dagster) in place of the Makefile routine.

@@ -5,7 +5,10 @@
 Live tab:    Postgres via the read-only role, refreshed every 5 seconds.
 History tab: gold Delta tables via DuckDB, as fresh as the last `make lake`.
 Ask tab:     questions answered by the FastAPI service (make api).
+Health tab:  stream lag, table freshness and the latest data-quality run.
 """
+
+from datetime import UTC, datetime
 
 import httpx
 import pandas as pd
@@ -15,6 +18,8 @@ import streamlit as st
 from retail import config
 from retail.dashboard import charts
 from retail.dashboard.data import GoldLake, LiveStore, store_today
+from retail.ops.monitoring import last_batch_at, stream_lag
+from retail.qa.engine import gold_built_at
 
 LIVE_REFRESH = "5s"
 
@@ -234,6 +239,67 @@ def ask_tab() -> None:
             st.json(result["params"], expanded=False)
 
 
+DQ_ICON = {"pass": "✅ Pass", "warn": "⚠️ Warn", "fail": "❌ Fail"}
+
+
+def ago(moment: datetime | None) -> str:
+    if moment is None:
+        return "never"
+    seconds = int((datetime.now(UTC) - moment).total_seconds())
+    for size, unit in ((86400, "d"), (3600, "h"), (60, "min")):
+        if seconds >= size:
+            return f"{seconds // size} {unit} ago"
+    return f"{seconds} s ago"
+
+
+@st.fragment(run_every="15s")
+def health_tab() -> None:
+    checkpoint = config.LAKE_DIR / "_checkpoints" / "stream_kafka"
+    try:
+        lags = stream_lag(checkpoint)
+        lag_text = f"{sum(t.lag for t in lags):,} msgs"
+    except Exception:  # Kafka down: show it rather than break the tab
+        lags, lag_text = [], "Kafka unreachable"
+    runs = live_store().quality_runs()
+    latest = live_store().latest_quality_run()
+
+    cols = st.columns(4)
+    cols[0].metric("Stream lag", lag_text,
+                   help="Kafka messages the streaming job hasn't processed yet.")
+    cols[1].metric("Last stream batch", ago(last_batch_at(checkpoint)))
+    cols[2].metric("Gold built", ago(gold_built_at(config.LAKE_DIR / "gold" / "sales_daily")))
+    if len(runs):
+        r = runs.iloc[0]
+        verdict = "❌ Failing" if r["fail"] else "⚠️ Warnings" if r["warn"] else "✅ Passing"
+        cols[3].metric("Data quality", verdict,
+                       help=f"{r['pass']} pass, {r['warn']} warn, {r['fail']} fail")
+    else:
+        cols[3].metric("Data quality", "not run")
+    st.caption("Stream lag and batch time refresh every 15 s. Quality results are from the "
+               "last `make quality` run.")
+
+    if lags:
+        st.dataframe(pd.DataFrame([t.__dict__ for t in lags]), hide_index=True, width="stretch",
+                     column_config={"topic": "Topic", "committed": "Processed up to",
+                                    "latest": "Latest offset", "lag": "Behind"})
+    st.subheader("Latest data-quality run")
+    if latest.empty:
+        st.info("No results yet. Run `make quality`.")
+        return
+    st.caption(f"Run {latest.run_id.iloc[0]} · {ago(latest.ran_at.iloc[0])}")
+    st.dataframe(
+        latest.assign(status=latest.status.map(DQ_ICON))[
+            ["status", "layer", "check_name", "observed", "expected", "details"]],
+        hide_index=True, width="stretch",
+        column_config={"status": "Status", "layer": "Layer", "check_name": "Check",
+                       "observed": "Observed", "expected": "Expected", "details": "Details"},
+    )
+    with st.expander("Recent runs"):
+        st.dataframe(runs, hide_index=True, width="stretch",
+                     column_config={"ran_at": st.column_config.DatetimeColumn(
+                         "Ran at", format="DD MMM HH:mm")})
+
+
 def main() -> None:
     st.title("🛒 Retail Data Platform")
     try:
@@ -250,13 +316,15 @@ def main() -> None:
     months = right.selectbox("History", [3, 6, 12], index=2,
                              format_func=lambda m: f"Last {m} months")
 
-    live, history, ask = st.tabs(["Live", "History", "Ask"])
+    live, history, ask, health = st.tabs(["Live", "History", "Ask", "Health"])
     with live:
         live_tab(store_ids)
     with history:
         history_tab(months, store_ids)
     with ask:
         ask_tab()
+    with health:
+        health_tab()
 
 
 main()

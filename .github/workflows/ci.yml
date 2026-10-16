@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv run --frozen ruff check .
+
+  test:
+    # Every test, including Spark, Postgres and embedding-model ones. Kafka isn't
+    # needed: streaming tests feed hand-built batches to the foreachBatch function.
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        # Fresh database, so the Debian-based pgvector image is fine here (locally we
+        # keep Alpine to preserve an existing volume's collation; see docker/postgres).
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_DB: retail
+          POSTGRES_USER: retail
+          POSTGRES_PASSWORD: retail
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U retail -d retail"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --frozen
+      - name: Cache Spark packages and the embedding model
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.ivy2
+            ~/.ivy2.5.2
+            data/models
+          key: deps-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+      - name: Test
+        run: uv run --frozen pytest -q

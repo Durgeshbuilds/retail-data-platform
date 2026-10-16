@@ -40,6 +40,10 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+filterwarnings = [
+    # Raised inside fastapi.testclient by starlette, not by this project.
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated",
+]
 markers = [
     "spark: starts a local Spark session (slow); skip with -m 'not spark'",
     "postgres: needs the docker Postgres (make up); uses a throwaway database",

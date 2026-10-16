@@ -1,7 +1,7 @@
 KAFKA_TOPICS = docker compose exec kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092
 TOPICS = invoices price-updates stock-receipts
 
-.PHONY: up down reset topics list-topics psql db-migrate install seed history simulate stream stream-check dashboard search-index api peek lake lake-check lake-reset test test-fast lint
+.PHONY: up down reset topics list-topics psql db-migrate install seed history simulate stream stream-check dashboard search-index api quality check peek lake lake-check lake-reset test test-fast lint
 
 up:  ## Start Kafka and Postgres and wait until both are healthy
 	docker compose up -d --wait
@@ -28,7 +28,8 @@ db-migrate:  ## Apply idempotent schema changes to an existing database
 		psql -U retail -d retail -v ON_ERROR_STOP=1 -q \
 		-f /docker-entrypoint-initdb.d/02_streaming.sql \
 		-f /docker-entrypoint-initdb.d/03_dashboard.sql \
-		-f /docker-entrypoint-initdb.d/04_search.sql
+		-f /docker-entrypoint-initdb.d/04_search.sql \
+		-f /docker-entrypoint-initdb.d/05_quality.sql
 
 install:  ## Create .venv on Python 3.12 and install dependencies
 	uv sync
@@ -70,6 +71,11 @@ lake-check:  ## Reconcile counts and revenue across bronze, silver and gold
 
 lake-reset:  ## Delete the Delta lake and its checkpoints (raw files are kept)
 	rm -rf data/lake
+
+quality:  ## Data-quality checks (silver, gold, live, stream); results saved to Postgres
+	uv run python -m retail.ops.quality
+
+check: lint test  ## Lint and run every test (what CI runs)
 
 test:  ## All tests, including Spark ones (~40s)
 	uv run pytest
