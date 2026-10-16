@@ -10,18 +10,10 @@ from pyspark.sql import functions as F
 
 from retail.catalog import load_products, load_stores
 from retail.lake import bronze, checks, dims, gold, silver
-from retail.lake.spark import create_spark
 from retail.lake.tables import Lake
 from retail.simulator.history import generate
 
 pytestmark = pytest.mark.spark
-
-
-@pytest.fixture(scope="module")
-def spark():
-    session = create_spark("retail-tests", master="local[2]", driver_memory="1g")
-    yield session
-    session.stop()
 
 
 def invoice_json(invoice_id: str, event_time: str, qty: int = 2, total: float = 56.0) -> str:

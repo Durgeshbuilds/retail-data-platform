@@ -33,4 +33,7 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-markers = ["spark: starts a local Spark session (slow); skip with -m 'not spark'"]
+markers = [
+    "spark: starts a local Spark session (slow); skip with -m 'not spark'",
+    "postgres: needs the docker Postgres (make up); uses a throwaway database",
+]

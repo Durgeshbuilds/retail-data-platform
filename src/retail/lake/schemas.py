@@ -36,3 +36,20 @@ BRONZE = StructType([
     StructField("source_ref", StringType()),  # file path, or topic/partition/offset
     StructField("ingested_at", TimestampType()),
 ])
+
+PRICE_UPDATE_EVENT = StructType([
+    StructField("schema_version", IntegerType()),
+    StructField("product_id", StringType()),
+    StructField("old_price", MONEY),
+    StructField("new_price", MONEY),
+    StructField("effective_at", TimestampType()),
+])
+
+STOCK_RECEIPT_EVENT = StructType([
+    StructField("schema_version", IntegerType()),
+    StructField("receipt_id", StringType()),
+    StructField("store_id", StringType()),
+    StructField("product_id", StringType()),
+    StructField("qty", IntegerType()),
+    StructField("received_at", TimestampType()),
+])

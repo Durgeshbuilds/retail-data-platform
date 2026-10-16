@@ -4,7 +4,7 @@ A supermarket data platform: invoices stream through Kafka and Spark into
 live per-store stock in Postgres, while batch jobs build a Delta Lake for
 history and analytics.
 
-> Work in progress — built phase by phase. Status: **Phase 2 (batch lakehouse) complete.**
+> Work in progress — built phase by phase. Status: **Phase 3 (streaming) complete.**
 
 ## Prerequisites (macOS, Apple Silicon)
 
@@ -20,12 +20,17 @@ Spark runs natively (not in Docker) to save memory.
 
 ```bash
 make up          # Kafka (KRaft) + Postgres, waits until healthy
+make db-migrate  # only for a database created before phase 3
 make topics      # invoices, price-updates, stock-receipts
 make install     # .venv on Python 3.12
 make seed        # 3 stores, 200 products, 12 months of price history, opening stock
 make history     # ~370k historical invoices -> data/raw/invoices/YYYY-MM/STORE-DATE.jsonl.gz
 make lake        # Spark: dims -> bronze -> silver -> gold -> reconciliation (~35s)
+
+# streaming: two terminals
+make stream      # Spark Structured Streaming: Kafka -> Postgres + bronze
 make simulate    # live invoices, price changes and restocks to Kafka (Ctrl-C to stop)
+make stream-check  # every Kafka event applied exactly once? stock reconciles?
 make peek TOPIC=invoices N=3   # newest messages on a topic
 make test        # or make test-fast to skip the Spark tests
 ```
@@ -96,6 +101,35 @@ Path-based Delta tables under `data/lake/`, built by
 - **Laptop tuning.** `local[4]`, 3 GB driver, 8 shuffle partitions. Tables are
   unpartitioned: ~40 MB per layer would only become many tiny files if split by day.
 
+## Streaming (Kafka → Spark → Postgres + Delta)
+
+[`src/retail/streaming/job.py`](src/retail/streaming/job.py) runs one Structured
+Streaming query over all three topics with a 5s trigger. Each micro-batch:
+
+1. appends invoice events to `bronze/invoices` (`source = 'kafka'`), so the batch
+   pipeline picks streamed sales up with no extra code;
+2. parses invoices with the **same validation code as silver**;
+3. applies sales, deliveries and price changes to Postgres in **one transaction**.
+
+Spark commits a batch's Kafka offsets only after it succeeds, so a crash means
+the batch is replayed. Every write is therefore idempotent:
+
+| Event | Postgres effect | Why a replay is harmless |
+|---|---|---|
+| Invoice line | `stock_qty -= qty`, `live_sales_daily += units, revenue` | Line is first claimed in `processed_lines (invoice_id, line_no)`; only lines claimed by this statement move stock (one statement, data-modifying CTEs) |
+| Stock receipt | `stock_qty += qty` | `stock_receipts.receipt_id` is the ledger; only newly inserted receipts move stock |
+| Price update | Close open `product_prices` row, open a new one, update `current_price` | Applied only if newer than the open row, so replays *and* out-of-order changes are skipped |
+| Bronze append | Delta append | `txnAppId` + `txnVersion = batch_id`: Delta skips a batch it already committed |
+
+Measured on a MacBook Air: ~2s from checkout to Postgres at 5 invoices/s, each
+batch taking ~1.5s. Tested by `kill -9` mid-stream, selling while it was down,
+and restarting: `make stream-check` confirms every Kafka invoice and receipt
+was applied exactly once and that, for all 600 store-product rows,
+`stock = opening − sold + received`.
+
+The job is the only writer of `inventory_current`, so transactions can't
+deadlock; with several writers you would lock rows in key order first.
+
 ## Design notes
 
 - **Stock is per store** — `inventory_current` is keyed on `(store_id, product_id)`.
@@ -120,14 +154,18 @@ src/retail/
   simulator/history.py      Historical invoice files for the batch path
   simulator/live.py         Kafka producer for the streaming path
   lake/                     Spark + Delta: bronze, silver, dims, gold, checks, run
-tests/
+  streaming/job.py          Kafka -> Postgres + bronze (Structured Streaming)
+  streaming/live_store.py   Idempotent Postgres writes for one micro-batch
+  streaming/check.py        Kafka vs Postgres reconciliation
+  peek.py                   Newest messages on a topic
+tests/                      Spark and Postgres tests use throwaway lakes and databases
 ```
 
 ## Roadmap
 
 1. ~~Foundation~~ — infrastructure, product master, event contracts, simulators
 2. ~~Batch~~ — bronze / silver / gold Delta tables with reconciliation
-3. Streaming — Spark Structured Streaming into Postgres stock and Delta
+3. ~~Streaming~~ — Spark Structured Streaming into Postgres stock and Delta
 4. Dashboard — Streamlit: live stock, low-stock alerts, sales, price changes
 5. Semantic search and Q&A — embeddings, FastAPI, DuckDB over gold
 6. Hardening — data quality checks, monitoring, CI

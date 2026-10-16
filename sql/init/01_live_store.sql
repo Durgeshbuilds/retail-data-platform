@@ -2,7 +2,12 @@
 -- streaming job. History and analytics live in Delta Lake, not here.
 
 -- Timestamps are stored as UTC (timestamptz); sessions display them in store time.
-ALTER DATABASE retail SET timezone TO 'Asia/Kolkata';
+-- (current_database() rather than a literal name, so test databases get it too.)
+DO $$
+BEGIN
+    EXECUTE format('ALTER DATABASE %I SET timezone TO %L', current_database(), 'Asia/Kolkata');
+END
+$$;
 
 CREATE TABLE stores (
     store_id    TEXT PRIMARY KEY,
