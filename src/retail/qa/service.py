@@ -10,8 +10,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from retail.catalog import store_today
 from retail.dashboard.charts import inr
-from retail.dashboard.data import store_today
 from retail.qa.engine import QueryEngine, QueryResult
 from retail.qa.parse import ParsedQuestion, StoreRef, parse
 from retail.qa.periods import Period

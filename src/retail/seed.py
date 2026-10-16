@@ -24,6 +24,7 @@ from retail.catalog import (
     load_stores,
     price_in_month,
     reorder_level,
+    store_today,
 )
 
 log = logging.getLogger(__name__)
@@ -95,7 +96,7 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
     with psycopg.connect(config.POSTGRES_DSN) as conn:  # commits on clean exit
-        seed(conn, date.today(), args.history_months)
+        seed(conn, store_today(), args.history_months)
         for table in ("stores", "products", "product_prices", "inventory_current"):
             count = conn.execute(f"SELECT count(*) FROM {table}").fetchone()[0]
             log.info("%-18s %6d rows", table, count)

@@ -7,18 +7,14 @@
 Both return pandas DataFrames with plain float/int columns, ready to chart.
 """
 
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
 
 import duckdb
 import pandas as pd
 import psycopg
 
-from retail.catalog import STORE_TZ
-
-
-def store_today() -> date:
-    return datetime.now(STORE_TZ).date()
+from retail.catalog import store_today  # noqa: F401  (re-exported for the app)
 
 
 class LiveStore:

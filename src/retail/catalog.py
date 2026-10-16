@@ -6,7 +6,7 @@ reorder levels and historical prices always agree with each other.
 
 import csv
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -14,6 +14,15 @@ from zoneinfo import ZoneInfo
 from retail.config import SEEDS_DIR
 
 STORE_TZ = ZoneInfo("Asia/Kolkata")
+
+
+def store_today() -> date:
+    """Today's date in the stores' time zone, whatever the machine's own zone is.
+
+    Sales days are IST calendar days. On a UTC machine (CI, a cloud server) the local
+    date is a day behind between 18:30 and midnight UTC, so never use date.today().
+    """
+    return datetime.now(STORE_TZ).date()
 
 # How many months of history the seed (price history) and history generator cover.
 DEFAULT_HISTORY_MONTHS = 12

@@ -25,8 +25,7 @@ import psycopg
 from confluent_kafka import KafkaException
 
 from retail import config
-from retail.catalog import TARGET_STOCK_MULTIPLE
-from retail.dashboard.data import store_today
+from retail.catalog import TARGET_STOCK_MULTIPLE, store_today
 from retail.ops.monitoring import last_batch_at, stream_lag
 from retail.streaming.check import STOCK_MISMATCHES
 

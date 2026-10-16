@@ -33,6 +33,7 @@ from retail.catalog import (
     load_products,
     load_stores,
     price_in_month,
+    store_today,
 )
 from retail.simulator.invoices import InvoiceFactory
 
@@ -115,7 +116,7 @@ def main() -> None:
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
-    end = date.today()  # history stops at yesterday; today belongs to the live stream
+    end = store_today()  # history stops at yesterday; today belongs to the live stream
     start = add_months(end.replace(day=1), -args.months)
     log.info("generating %s to %s into %s", start, end - timedelta(days=1), args.out)
 

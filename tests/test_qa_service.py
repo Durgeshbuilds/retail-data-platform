@@ -11,7 +11,7 @@ import pytest
 from fastapi.testclient import TestClient
 from psycopg.conninfo import make_conninfo
 
-from retail.catalog import load_products, load_stores
+from retail.catalog import load_products, load_stores, store_today
 from retail.lake import bronze, dims, gold, silver
 from retail.lake.tables import Lake
 from retail.qa.engine import QueryEngine
@@ -84,7 +84,7 @@ def lake_and_live(spark, pg_dsn, tmp_path):
     gold.build(spark, lake)
     with psycopg.connect(pg_dsn) as conn:
         apply_batch(conn, [
-            SaleLine("x", 1, "BLR01", "P0001", 4, Decimal("28.00"), date.today()),
+            SaleLine("x", 1, "BLR01", "P0001", 4, Decimal("28.00"), store_today()),
             # A day before the cut-over: gold is authoritative, so this must be ignored.
             SaleLine("y", 1, "BLR01", "P0001", 1000, Decimal("28.00"), date(2026, 9, 29)),
         ], [], [])
@@ -96,13 +96,13 @@ def lake_and_live(spark, pg_dsn, tmp_path):
 def test_engine_splits_gold_and_live_at_cutover(spark, lake_and_live):
     lake, reader = lake_and_live
     engine = QueryEngine(lake.root, reader)
-    assert engine.cutover() == date.today()  # gold was built today
+    assert engine.cutover() == store_today()  # gold was built today
 
     gold_units = (spark.read.format("delta").load(lake.gold_sales_daily)
                   .filter("product_id = 'P0001' AND store_id = 'BLR01'")
                   .groupBy().sum("units").first()[0]) or 0
     assert gold_units > 0  # so the test really mixes gold and live rows
-    result = engine.run("sales", start=date(2026, 1, 1), end=date.today(), store_ids=["BLR01"],
+    result = engine.run("sales", start=date(2026, 1, 1), end=store_today(), store_ids=["BLR01"],
                         product_ids=["P0001"])
     assert result.rows[0][1] == gold_units + 4  # gold history + today's live, no overlap
 
@@ -114,10 +114,10 @@ def test_engine_without_lake_reads_live_only(pg_dsn, tmp_path):
     reader = make_conninfo(pg_dsn, user="retail_reader", password="retail_reader")
     with psycopg.connect(pg_dsn) as conn:
         apply_batch(conn, [SaleLine("z", 1, "PUN01", "P0002", 3, Decimal("34.00"),
-                                    date.today() - timedelta(days=2))], [], [])
+                                    store_today() - timedelta(days=2))], [], [])
     engine = QueryEngine(tmp_path / "no-lake", reader)
     assert engine.cutover() == date.min
-    rows = engine.run("sales", start=date.today() - timedelta(days=7), end=date.today(),
+    rows = engine.run("sales", start=store_today() - timedelta(days=7), end=store_today(),
                       store_ids=["PUN01"], product_ids=None).rows
     assert rows == [["Amul Gold Full Cream Milk (500 ml)", 3, 102.0]] or rows == [
         ("Amul Gold Full Cream Milk (500 ml)", 3, 102.0)]

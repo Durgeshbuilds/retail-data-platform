@@ -94,13 +94,13 @@ def test_gold_lake_reports_missing_tables(tmp_path):
 
 @pytest.mark.spark
 def test_gold_queries(spark, tmp_path):
-    from retail.catalog import load_products, load_stores
+    from retail.catalog import load_products, load_stores, store_today
     from retail.lake import bronze, dims, gold, silver
     from retail.lake.tables import Lake
     from retail.simulator.history import generate
 
     lake, raw = Lake(tmp_path / "lake"), tmp_path / "raw"
-    today = date.today()
+    today = store_today()
     generate(load_products(), load_stores(), today.replace(day=1), today, 20, raw, seed=3)
     if not any(raw.rglob("*.gz")):
         pytest.skip("first day of the month: no history yet this month")

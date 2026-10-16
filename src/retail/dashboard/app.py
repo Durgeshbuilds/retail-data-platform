@@ -16,8 +16,9 @@ import psycopg
 import streamlit as st
 
 from retail import config
+from retail.catalog import store_today
 from retail.dashboard import charts
-from retail.dashboard.data import GoldLake, LiveStore, store_today
+from retail.dashboard.data import GoldLake, LiveStore
 from retail.ops.monitoring import last_batch_at, stream_lag
 from retail.qa.engine import gold_built_at
 
