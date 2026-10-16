@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+
+# Generated data and Spark/Delta output
+data/
+spark-warehouse/
+checkpoints/
+metastore_db/
+derby.log
