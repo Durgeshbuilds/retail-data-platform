@@ -1,7 +1,7 @@
 KAFKA_TOPICS = docker compose exec kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092
 TOPICS = invoices price-updates stock-receipts
 
-.PHONY: up down reset topics list-topics psql install seed history simulate peek test lint
+.PHONY: up down reset topics list-topics psql install seed history simulate peek lake lake-check lake-reset test test-fast lint
 
 up:  ## Start Kafka and Postgres and wait until both are healthy
 	docker compose up -d --wait
@@ -41,8 +41,20 @@ peek:  ## Show the latest 3 messages on a topic: make peek TOPIC=price-updates
 		--bootstrap-server localhost:9092 --topic $(TOPIC) --from-beginning \
 		--property print.key=true --max-messages 3 --timeout-ms 5000
 
-test:
+lake:  ## Batch pipeline: dims -> bronze -> silver -> gold -> reconciliation checks
+	uv run python -m retail.lake.run
+
+lake-check:  ## Reconcile counts and revenue across bronze, silver and gold
+	uv run python -m retail.lake.run check
+
+lake-reset:  ## Delete the Delta lake and its checkpoints (raw files are kept)
+	rm -rf data/lake
+
+test:  ## All tests, including Spark ones (~40s)
 	uv run pytest
+
+test-fast:  ## Tests that don't start Spark
+	uv run pytest -m "not spark"
 
 lint:
 	uv run ruff check .

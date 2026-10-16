@@ -6,8 +6,10 @@ readme = "README.md"
 requires-python = ">=3.12,<3.14"
 dependencies = [
     "confluent-kafka>=2.6",
+    "delta-spark>=4.0.1,<4.1",
     "psycopg[binary]>=3.2",
     "pydantic>=2.9",
+    "pyspark>=4.0.1,<4.1",
 ]
 
 [dependency-groups]
@@ -31,3 +33,4 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["spark: starts a local Spark session (slow); skip with -m 'not spark'"]

@@ -13,3 +13,5 @@ TOPIC_STOCK_RECEIPTS = "stock-receipts"
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SEEDS_DIR = PROJECT_ROOT / "seeds"
 DATA_DIR = PROJECT_ROOT / "data"
+RAW_INVOICES_DIR = DATA_DIR / "raw" / "invoices"
+LAKE_DIR = DATA_DIR / "lake"

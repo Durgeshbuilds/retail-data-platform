@@ -4,7 +4,7 @@ A supermarket data platform: invoices stream through Kafka and Spark into
 live per-store stock in Postgres, while batch jobs build a Delta Lake for
 history and analytics.
 
-> Work in progress — built phase by phase. Status: **Phase 1 (foundation) complete.**
+> Work in progress — built phase by phase. Status: **Phase 2 (batch lakehouse) complete.**
 
 ## Prerequisites (macOS, Apple Silicon)
 
@@ -24,9 +24,10 @@ make topics      # invoices, price-updates, stock-receipts
 make install     # .venv on Python 3.12
 make seed        # 3 stores, 200 products, 12 months of price history, opening stock
 make history     # ~370k historical invoices -> data/raw/invoices/YYYY-MM/STORE.jsonl.gz
+make lake        # Spark: dims -> bronze -> silver -> gold -> reconciliation (~35s)
 make simulate    # live invoices, price changes and restocks to Kafka (Ctrl-C to stop)
 make peek TOPIC=invoices
-make test
+make test        # or make test-fast to skip the Spark tests
 ```
 
 `make down` stops everything; `make reset` also deletes the data.
@@ -60,6 +61,35 @@ price changes; every 10s it checks `inventory_current` for items at or below
 their reorder level and schedules a delivery. It only *reads* stock: applying
 sales and deliveries to Postgres is the streaming job's job (phase 3).
 
+## Lakehouse (Delta Lake, PySpark 4.0)
+
+Path-based Delta tables under `data/lake/`, built by
+[`src/retail/lake/`](src/retail/lake) (`python -m retail.lake.run [steps]`).
+
+| Layer | Table | Grain | How it's written |
+|---|---|---|---|
+| Bronze | `bronze/invoices` | one raw JSON event | Append. Files are loaded by a Structured Streaming `availableNow` query, whose checkpoint remembers which files were read |
+| Silver | `silver/invoices` | invoice | Insert-only `MERGE` on `invoice_id` |
+| Silver | `silver/invoice_items` | invoice line | Insert-only `MERGE` on `(invoice_id, line_no)` |
+| Silver | `silver/invoice_rejects` | rejected event + reason | Idempotent append (`txnAppId` / `txnVersion`) |
+| Silver | `silver/products`, `silver/stores` | dimension rows | Full reload from `seeds/` |
+| Gold | `gold/sales_daily` | date × store × product | Overwrite, or `replaceWhere` from `--from-date` |
+| Gold | `gold/store_daily` | date × store | Invoices, revenue, average basket |
+| Gold | `gold/sales_monthly` | month × store × category | Units, revenue |
+
+- **Incremental and re-runnable.** Bronze reads only new files and silver reads
+  only new bronze rows (Delta as a streaming source). Re-running any step is safe.
+- **Validation, not silent drops.** Silver rejects unparseable JSON, unknown
+  `schema_version`, missing keys, non-positive qty/price, duplicate `line_no`
+  and totals that don't equal their lines, recording the reason for each.
+- **Store-local dates.** `event_date` is the IST calendar date, so a sale at
+  00:30 IST lands on the right day even though it is 19:00 UTC the day before.
+- **Reconciliation** (`make lake-check`) proves nothing was lost or double
+  counted: distinct valid bronze invoices = silver invoices, line amounts sum to
+  invoice totals, and every gold table sums back to silver, to the paisa.
+- **Laptop tuning.** `local[4]`, 3 GB driver, 8 shuffle partitions. Tables are
+  unpartitioned: ~40 MB per layer would only become many tiny files if split by day.
+
 ## Design notes
 
 - **Stock is per store** — `inventory_current` is keyed on `(store_id, product_id)`.
@@ -83,13 +113,14 @@ src/retail/
   simulator/invoices.py     Basket and invoice builder shared by both simulators
   simulator/history.py      Historical invoice files for the batch path
   simulator/live.py         Kafka producer for the streaming path
+  lake/                     Spark + Delta: bronze, silver, dims, gold, checks, run
 tests/
 ```
 
 ## Roadmap
 
 1. ~~Foundation~~ — infrastructure, product master, event contracts, simulators
-2. Batch — bronze / silver / gold Delta tables from the historical files
+2. ~~Batch~~ — bronze / silver / gold Delta tables with reconciliation
 3. Streaming — Spark Structured Streaming into Postgres stock and Delta
 4. Dashboard — Streamlit: live stock, low-stock alerts, sales, price changes
 5. Semantic search and Q&A — embeddings, FastAPI, DuckDB over gold

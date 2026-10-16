@@ -105,7 +105,7 @@ def main() -> None:
                         help="whole months back from the current month to start at")
     parser.add_argument("--invoices-per-day", type=int, default=300,
                         help="invoices per day for an average-sized store")
-    parser.add_argument("--out", type=Path, default=config.DATA_DIR / "raw" / "invoices")
+    parser.add_argument("--out", type=Path, default=config.RAW_INVOICES_DIR)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--overwrite", action="store_true",
                         help="delete existing files in --out first")
