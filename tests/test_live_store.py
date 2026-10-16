@@ -41,6 +41,11 @@ def test_sales_apply_once(pg_dsn):
             " WHERE sale_date = %s AND store_id = 'BLR01' AND product_id = 'P0001'", (DAY,)
         ).fetchone()
         assert (units, revenue) == (5, Decimal("140.00"))
+        invoices = conn.execute(
+            "SELECT invoices FROM live_store_daily WHERE sale_date = %s AND store_id = 'BLR01'",
+            (DAY,),
+        ).fetchone()[0]
+        assert invoices == 2  # inv-1 (two lines) and inv-2, counted once despite the replay
 
 
 def test_duplicate_line_within_one_batch_counts_once(pg_dsn):

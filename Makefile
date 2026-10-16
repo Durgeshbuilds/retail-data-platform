@@ -1,7 +1,7 @@
 KAFKA_TOPICS = docker compose exec kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092
 TOPICS = invoices price-updates stock-receipts
 
-.PHONY: up down reset topics list-topics psql db-migrate install seed history simulate stream stream-check peek lake lake-check lake-reset test test-fast lint
+.PHONY: up down reset topics list-topics psql db-migrate install seed history simulate stream stream-check dashboard peek lake lake-check lake-reset test test-fast lint
 
 up:  ## Start Kafka and Postgres and wait until both are healthy
 	docker compose up -d --wait
@@ -24,8 +24,10 @@ psql:  ## Open a psql shell on the live store
 	docker compose exec postgres psql -U retail -d retail
 
 db-migrate:  ## Apply idempotent schema changes to an existing database
-	docker compose exec -T postgres psql -U retail -d retail -v ON_ERROR_STOP=1 -q \
-		-f /docker-entrypoint-initdb.d/02_streaming.sql
+	docker compose exec -T -e PGOPTIONS="-c client_min_messages=warning" postgres \
+		psql -U retail -d retail -v ON_ERROR_STOP=1 -q \
+		-f /docker-entrypoint-initdb.d/02_streaming.sql \
+		-f /docker-entrypoint-initdb.d/03_dashboard.sql
 
 install:  ## Create .venv on Python 3.12 and install dependencies
 	uv sync
@@ -44,6 +46,9 @@ stream:  ## Spark streaming job: Kafka -> Postgres stock/prices/sales + bronze (
 
 stream-check:  ## Verify every Kafka event was applied to Postgres exactly once
 	uv run python -m retail.streaming.check
+
+dashboard:  ## Streamlit dashboard on http://localhost:8501
+	uv run streamlit run src/retail/dashboard/app.py
 
 TOPIC ?= invoices
 N ?= 3

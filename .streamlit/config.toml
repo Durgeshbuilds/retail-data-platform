@@ -1,0 +1,13 @@
+[browser]
+gatherUsageStats = false
+
+[server]
+headless = true
+
+[theme.light]
+# Neutral slate for widgets and tabs: the default red reads as an alert, and red is
+# reserved for the critical status colour. Set per mode so automatic dark mode stays on.
+primaryColor = "#475569"
+
+[theme.dark]
+primaryColor = "#94a3b8"

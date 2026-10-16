@@ -4,7 +4,7 @@ A supermarket data platform: invoices stream through Kafka and Spark into
 live per-store stock in Postgres, while batch jobs build a Delta Lake for
 history and analytics.
 
-> Work in progress — built phase by phase. Status: **Phase 3 (streaming) complete.**
+> Work in progress — built phase by phase. Status: **Phase 4 (dashboard) complete.**
 
 ## Prerequisites (macOS, Apple Silicon)
 
@@ -20,7 +20,7 @@ Spark runs natively (not in Docker) to save memory.
 
 ```bash
 make up          # Kafka (KRaft) + Postgres, waits until healthy
-make db-migrate  # only for a database created before phase 3
+make db-migrate  # only for a database created before phase 4
 make topics      # invoices, price-updates, stock-receipts
 make install     # .venv on Python 3.12
 make seed        # 3 stores, 200 products, 12 months of price history, opening stock
@@ -31,6 +31,7 @@ make lake        # Spark: dims -> bronze -> silver -> gold -> reconciliation (~3
 make stream      # Spark Structured Streaming: Kafka -> Postgres + bronze
 make simulate    # live invoices, price changes and restocks to Kafka (Ctrl-C to stop)
 make stream-check  # every Kafka event applied exactly once? stock reconciles?
+make dashboard   # Streamlit on http://localhost:8501
 make peek TOPIC=invoices N=3   # newest messages on a topic
 make test        # or make test-fast to skip the Spark tests
 ```
@@ -130,6 +131,35 @@ was applied exactly once and that, for all 600 store-product rows,
 The job is the only writer of `inventory_current`, so transactions can't
 deadlock; with several writers you would lock rows in key order first.
 
+## Dashboard (Streamlit)
+
+![Live tab](docs/images/dashboard-live.png)
+
+`make dashboard` → http://localhost:8501. One filter row (stores, history
+range) scopes both tabs.
+
+- **Live** (Postgres, refreshes every 5s): revenue, invoices and average basket
+  today; revenue by store; top products; stock alerts (⚠️ low, ⛔ out or
+  negative); recent price changes with old → new price.
+- **History** (gold Delta tables via **DuckDB**, no Spark): monthly revenue by
+  store, daily revenue for 90 days, revenue by category. Ends at yesterday, since
+  today is partial and lives on the Live tab.
+
+It connects as **`retail_reader`**, a role that is read-only at the database
+level (`default_transaction_read_only`, 5s `statement_timeout`), the same role
+the Q&A layer will use.
+
+Charts follow one set of rules: each store keeps one colour everywhere (a
+palette checked for colour-blind separation in light and dark mode), charts not
+about stores use a neutral colour no store uses, status is always icon + label,
+and every chart has a table view. Dark mode uses its own colour steps rather
+than an automatic inversion.
+
+<details><summary>History tab, dark mode</summary>
+
+![History tab, dark mode](docs/images/dashboard-history-dark.png)
+</details>
+
 ## Design notes
 
 - **Stock is per store** — `inventory_current` is keyed on `(store_id, product_id)`.
@@ -157,6 +187,7 @@ src/retail/
   streaming/job.py          Kafka -> Postgres + bronze (Structured Streaming)
   streaming/live_store.py   Idempotent Postgres writes for one micro-batch
   streaming/check.py        Kafka vs Postgres reconciliation
+  dashboard/                Streamlit app, read-only queries (Postgres + DuckDB), charts
   peek.py                   Newest messages on a topic
 tests/                      Spark and Postgres tests use throwaway lakes and databases
 ```
@@ -166,6 +197,6 @@ tests/                      Spark and Postgres tests use throwaway lakes and dat
 1. ~~Foundation~~ — infrastructure, product master, event contracts, simulators
 2. ~~Batch~~ — bronze / silver / gold Delta tables with reconciliation
 3. ~~Streaming~~ — Spark Structured Streaming into Postgres stock and Delta
-4. Dashboard — Streamlit: live stock, low-stock alerts, sales, price changes
+4. ~~Dashboard~~ — Streamlit: live stock, low-stock alerts, sales, price changes
 5. Semantic search and Q&A — embeddings, FastAPI, DuckDB over gold
 6. Hardening — data quality checks, monitoring, CI

@@ -5,6 +5,10 @@ from pathlib import Path
 
 KAFKA_BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP", "localhost:9092")
 POSTGRES_DSN = os.getenv("POSTGRES_DSN", "postgresql://retail:retail@localhost:5432/retail")
+# Read-only role (sql/init/03_dashboard.sql) for the dashboard and Q&A layer.
+POSTGRES_READER_DSN = os.getenv(
+    "POSTGRES_READER_DSN", "postgresql://retail_reader:retail_reader@localhost:5432/retail"
+)
 
 TOPIC_INVOICES = "invoices"
 TOPIC_PRICE_UPDATES = "price-updates"

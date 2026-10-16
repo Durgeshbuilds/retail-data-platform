@@ -3,7 +3,8 @@
 Spark may replay a micro-batch after a failure, so every write here is idempotent:
 
 * invoice lines   are claimed in processed_lines (invoice_id, line_no) first; only
-                  lines claimed by *this* call decrement stock and add to sales.
+                  lines claimed by *this* call decrement stock and add to sales
+                  (live_sales_daily per product, live_store_daily per store).
 * stock receipts  are inserted into stock_receipts (receipt_id); only newly
                   inserted receipts add to stock.
 * price changes   apply only if newer than the product's open price row, so a
@@ -90,6 +91,13 @@ sales AS (
     SET units = l.units + EXCLUDED.units,
         revenue = l.revenue + EXCLUDED.revenue,
         updated_at = now()
+),
+store_days AS (
+    INSERT INTO live_store_daily AS d (sale_date, store_id, invoices)
+    SELECT sale_date, store_id, count(DISTINCT invoice_id)
+    FROM new_lines GROUP BY sale_date, store_id
+    ON CONFLICT (sale_date, store_id) DO UPDATE
+    SET invoices = d.invoices + EXCLUDED.invoices, updated_at = now()
 )
 SELECT count(*) FROM new_lines
 """
