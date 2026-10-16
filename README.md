@@ -272,10 +272,9 @@ latest quality run.
 | A quality check fails | Its row in the Health tab names an example (product, store-day); `make lake-check` and `make stream-check` give the full reconciliation |
 | Start over | `make reset && make lake-reset`, then the quick start |
 
-Caveat worth knowing: deleting the streaming checkpoint without resetting the
-lake makes Spark number batches from 0 again, and Delta then skips bronze appends
-whose batch ids it has already seen. Postgres stays correct (the ledgers are keyed
-on invoice lines, not batch ids), but reset the lake too.
+Deleting the streaming checkpoint is safe: Spark then numbers batches from 0
+again, but bronze appends are keyed on the checkpoint's own query id as well as the
+batch id, so no rows are skipped, and Postgres's ledgers prevent double counting.
 
 ## CI
 

@@ -27,6 +27,9 @@ services:
       # Topics are created explicitly (make topics) so typos fail loudly.
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
       KAFKA_HEAP_OPTS: "-Xms512m -Xmx512m"
+      # Write the log (topics and messages) to the mounted volume. The image's default
+      # is a /tmp folder inside the container, so `make down` would wipe every topic.
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
     volumes:
       - kafka-data:/var/lib/kafka/data
     healthcheck:

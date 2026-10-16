@@ -17,6 +17,7 @@ recognise the work they have already done.
 """
 
 import argparse
+import json
 import logging
 import time
 from datetime import UTC, datetime
@@ -103,8 +104,22 @@ def price_changes(batch: DataFrame) -> list[PriceChange]:
 class BatchProcessor:
     """The foreachBatch function. Runs on the driver, once per micro-batch."""
 
-    def __init__(self, lake: Lake, dsn: str) -> None:
-        self.lake, self.dsn = lake, dsn
+    def __init__(self, lake: Lake, dsn: str, checkpoint: Path) -> None:
+        self.lake, self.dsn, self.checkpoint = lake, dsn, checkpoint
+        self._app_id: str | None = None
+
+    def bronze_app_id(self) -> str:
+        """Delta transaction id for bronze appends, unique to this checkpoint.
+
+        Batch ids restart at 0 with a new checkpoint. Under one fixed id, Delta would
+        then skip every append whose batch id it had already seen, silently losing
+        rows. Spark writes the query's id to <checkpoint>/metadata before the first
+        batch, and a new checkpoint gets a new id, so the two can never collide.
+        """
+        if self._app_id is None:
+            query_id = json.loads((self.checkpoint / "metadata").read_text())["id"]
+            self._app_id = f"{BRONZE_APP_ID}.{query_id}"
+        return self._app_id
 
     def __call__(self, batch: DataFrame, batch_id: int) -> None:
         began = time.monotonic()
@@ -116,7 +131,7 @@ class BatchProcessor:
                 # skips the write instead of appending the rows a second time.
                 (
                     bronze_rows.write.format("delta").mode("append")
-                    .option("txnAppId", BRONZE_APP_ID).option("txnVersion", batch_id)
+                    .option("txnAppId", self.bronze_app_id()).option("txnVersion", batch_id)
                     .save(self.lake.bronze_invoices)
                 )
             lines, rejected, newest = sale_lines(bronze_rows)
@@ -165,9 +180,11 @@ def main() -> None:
         .option("maxOffsetsPerTrigger", args.max_offsets)
         .load()
     )
+    checkpoint = lake.checkpoint("stream_kafka")
     writer = (
-        source.writeStream.foreachBatch(BatchProcessor(lake, config.POSTGRES_DSN))
-        .option("checkpointLocation", lake.checkpoint("stream_kafka"))
+        source.writeStream.foreachBatch(
+            BatchProcessor(lake, config.POSTGRES_DSN, Path(checkpoint)))
+        .option("checkpointLocation", checkpoint)
     )
     if args.available_now:
         writer = writer.trigger(availableNow=True)
