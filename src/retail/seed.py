@@ -20,9 +20,9 @@ from retail.catalog import (
     TARGET_STOCK_MULTIPLE,
     Product,
     add_months,
-    historical_price,
     load_products,
     load_stores,
+    price_in_month,
     reorder_level,
 )
 
@@ -40,7 +40,7 @@ def price_history(
     rows: list[list] = []
     for months_ago in range(months, -1, -1):
         month = add_months(current_month, -months_ago)
-        price = historical_price(product.price, month, today)
+        price = price_in_month(product.price, month)
         if rows and rows[-1][2] == price:
             continue  # unchanged, so the previous row stays in effect
         rows.append([datetime.combine(month, time(), STORE_TZ), None, price])
@@ -62,7 +62,8 @@ def seed(conn: psycopg.Connection, today: date, history_months: int) -> None:
         cur.executemany(
             "INSERT INTO products (product_id, name, category, brand, unit, current_price)"
             " VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT DO NOTHING",
-            [(p.product_id, p.name, p.category, p.brand, p.unit, p.price) for p in products],
+            [(p.product_id, p.name, p.category, p.brand, p.unit, price_in_month(p.price, today))
+             for p in products],
         )
         cur.executemany(
             "INSERT INTO product_prices (product_id, valid_from, valid_to, price)"

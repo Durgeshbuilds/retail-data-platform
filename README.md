@@ -23,10 +23,10 @@ make up          # Kafka (KRaft) + Postgres, waits until healthy
 make topics      # invoices, price-updates, stock-receipts
 make install     # .venv on Python 3.12
 make seed        # 3 stores, 200 products, 12 months of price history, opening stock
-make history     # ~370k historical invoices -> data/raw/invoices/YYYY-MM/STORE.jsonl.gz
+make history     # ~370k historical invoices -> data/raw/invoices/YYYY-MM/STORE-DATE.jsonl.gz
 make lake        # Spark: dims -> bronze -> silver -> gold -> reconciliation (~35s)
 make simulate    # live invoices, price changes and restocks to Kafka (Ctrl-C to stop)
-make peek TOPIC=invoices
+make peek TOPIC=invoices N=3   # newest messages on a topic
 make test        # or make test-fast to skip the Spark tests
 ```
 
@@ -51,9 +51,15 @@ Money is exact `Decimal` in Python and a JSON number on the wire; timestamps are
 UTC ISO-8601 with milliseconds.
 
 **Historical files** use the exact same `Invoice` JSON as the Kafka topic, so the
-bronze layer ingests the batch and streaming paths with one schema. Historical
-prices are deflated ~0.5% a month, and the seeded `product_prices` history
-matches them month for month. Output is deterministic for a given `--seed`.
+bronze layer ingests the batch and streaming paths with one schema. There is one
+file per store per day, like a nightly POS export. A store-day's content depends
+only on `--seed`, the store and the date, and existing files are never rewritten:
+re-running `make history` on a later day adds just the new days. (Bronze tracks
+files by path, so a rewritten file would silently never be re-read.)
+
+Prices are a fixed function of the month: list prices in `products.csv` apply to
+October 2026 and drift ~0.5% a month either side, so the same month always gets
+the same price, and the seeded `product_prices` history matches the invoices.
 
 **Live simulator** — invoices arrive as a Poisson process (default 5/s, a
 sped-up day), weighted by store size and product popularity. Every 30s one

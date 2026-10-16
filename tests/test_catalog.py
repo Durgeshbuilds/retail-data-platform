@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
-from retail.catalog import add_months, historical_price, load_products, load_stores
+from retail.catalog import add_months, load_products, load_stores, price_in_month
 from retail.seed import price_history
 
 
@@ -25,11 +25,10 @@ def test_add_months_crosses_years():
     assert add_months(date(2025, 11, 1), 3) == date(2026, 2, 1)
 
 
-def test_historical_price():
-    today = date(2026, 10, 16)
-    assert historical_price(Decimal("28.00"), date(2026, 10, 1), today) == Decimal("28.00")
-    year_ago = historical_price(Decimal("650.00"), date(2025, 10, 5), today)
-    assert year_ago == Decimal("612.00")  # 650 / 1.005^12, whole rupees
+def test_price_in_month_is_anchored_to_price_list():
+    assert price_in_month(Decimal("28.00"), date(2026, 10, 20)) == Decimal("28.00")
+    assert price_in_month(Decimal("650.00"), date(2025, 10, 5)) == Decimal("612.00")
+    assert price_in_month(Decimal("650.00"), date(2027, 1, 1)) == Decimal("660.00")
 
 
 def test_price_history_is_contiguous_and_ends_open():

@@ -29,17 +29,16 @@ install:  ## Create .venv on Python 3.12 and install dependencies
 seed:  ## Load stores, products, price history and opening stock (safe to re-run)
 	uv run python -m retail.seed
 
-history:  ## Generate 12 months of historical invoices into data/raw/invoices
-	uv run python -m retail.simulator.history --overwrite
+history:  ## Generate 12 months of daily invoice files (only days not generated yet)
+	uv run python -m retail.simulator.history
 
 simulate:  ## Stream live invoices, price changes and restocks to Kafka (Ctrl-C to stop)
 	uv run python -m retail.simulator.live
 
 TOPIC ?= invoices
-peek:  ## Show the latest 3 messages on a topic: make peek TOPIC=price-updates
-	docker compose exec kafka /opt/kafka/bin/kafka-console-consumer.sh \
-		--bootstrap-server localhost:9092 --topic $(TOPIC) --from-beginning \
-		--property print.key=true --max-messages 3 --timeout-ms 5000
+N ?= 3
+peek:  ## Show the newest messages on a topic: make peek TOPIC=price-updates N=5
+	uv run python -m retail.peek $(TOPIC) -n $(N)
 
 lake:  ## Batch pipeline: dims -> bronze -> silver -> gold -> reconciliation checks
 	uv run python -m retail.lake.run

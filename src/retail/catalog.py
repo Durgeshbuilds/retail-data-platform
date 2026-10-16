@@ -20,6 +20,8 @@ DEFAULT_HISTORY_MONTHS = 12
 
 # Prices drift up ~0.5% a month, so a year ago things were ~6% cheaper.
 MONTHLY_INFLATION = Decimal("0.005")
+# The month the list prices in seeds/products.csv apply to.
+PRICE_LIST_MONTH = date(2026, 10, 1)
 
 # Reorder level = popularity x this x store size. Restocks refill to reorder level x
 # TARGET_STOCK_MULTIPLE, and opening stock starts at that same target.
@@ -91,15 +93,16 @@ def months_between(earlier: date, later: date) -> int:
     return (later.year - earlier.year) * 12 + later.month - earlier.month
 
 
-def historical_price(current_price: Decimal, day: date, today: date) -> Decimal:
+def price_in_month(list_price: Decimal, day: date) -> Decimal:
     """List price in effect during the calendar month containing `day`.
 
-    The current month uses the current price; earlier months are deflated by
-    MONTHLY_INFLATION per month and rounded to whole rupees.
+    Anchored to PRICE_LIST_MONTH, so a given month always gets the same price no
+    matter when the seed or the history generator runs. Earlier months are
+    deflated and later months inflated by MONTHLY_INFLATION, in whole rupees.
     """
-    months_ago = months_between(day, today)
-    if months_ago <= 0:
-        return current_price
-    price = current_price / (1 + MONTHLY_INFLATION) ** months_ago
+    months_before = months_between(day, PRICE_LIST_MONTH)
+    if months_before == 0:
+        return list_price
+    price = list_price / (1 + MONTHLY_INFLATION) ** months_before
     rupees = max(price.quantize(Decimal("1"), ROUND_HALF_UP), Decimal("1"))
     return rupees.quantize(Decimal("0.01"))
