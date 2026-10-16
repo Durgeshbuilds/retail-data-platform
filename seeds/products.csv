@@ -1,0 +1,201 @@
+product_id,name,category,brand,unit,price,popularity
+P0001,Amul Taaza Toned Milk,Dairy,Amul,500 ml,28.00,10
+P0002,Amul Gold Full Cream Milk,Dairy,Amul,500 ml,34.00,9
+P0003,Mother Dairy Toned Milk,Dairy,Mother Dairy,500 ml,28.00,9
+P0004,Nandini Toned Milk,Dairy,Nandini,500 ml,24.00,8
+P0005,Amul Masti Dahi,Dairy,Amul,400 g,35.00,7
+P0006,Mother Dairy Classic Curd,Dairy,Mother Dairy,400 g,35.00,6
+P0007,Amul Butter,Dairy,Amul,100 g,58.00,8
+P0008,Amul Butter,Dairy,Amul,500 g,285.00,5
+P0009,Amul Cheese Slices,Dairy,Amul,200 g,145.00,5
+P0010,Amul Processed Cheese Block,Dairy,Amul,400 g,235.00,3
+P0011,Amul Fresh Paneer,Dairy,Amul,200 g,95.00,7
+P0012,Mother Dairy Paneer,Dairy,Mother Dairy,200 g,90.00,5
+P0013,Amul Pure Ghee,Dairy,Amul,1 L,650.00,4
+P0014,Amul Fresh Cream,Dairy,Amul,250 ml,72.00,3
+P0015,Amul Masti Buttermilk,Dairy,Amul,500 ml,25.00,6
+P0016,Epigamia Greek Yogurt Strawberry,Dairy,Epigamia,85 g,55.00,3
+P0017,Sofit Soya Milk Plain,Dairy,Sofit,1 L,120.00,2
+P0018,Amul Kool Kesar Flavoured Milk,Dairy,Amul,180 ml,30.00,4
+P0019,Nestle a+ Slim Skimmed Milk,Dairy,Nestle,1 L,78.00,3
+P0020,Amul Lassi,Dairy,Amul,200 ml,25.00,4
+P0021,Britannia Sandwich White Bread,Bakery,Britannia,400 g,45.00,8
+P0022,Harvest Gold Brown Bread,Bakery,Harvest Gold,400 g,55.00,6
+P0023,Modern Multigrain Bread,Bakery,Modern,450 g,60.00,4
+P0024,English Oven Pav,Bakery,English Oven,250 g,30.00,6
+P0025,Britannia Fruit Cake,Bakery,Britannia,250 g,70.00,3
+P0026,Britannia Toastea Rusk,Bakery,Britannia,200 g,40.00,5
+P0027,English Oven Burger Buns,Bakery,English Oven,200 g,40.00,3
+P0028,Harvest Gold Whole Wheat Bread,Bakery,Harvest Gold,450 g,55.00,5
+P0029,Butter Croissant,Bakery,Store Bakery,2 pcs,80.00,2
+P0030,Garlic Bread,Bakery,Store Bakery,200 g,65.00,2
+P0031,Plain Kulcha,Bakery,Store Bakery,4 pcs,40.00,2
+P0032,Wibs Pizza Base,Bakery,Wibs,200 g,45.00,2
+P0033,Banana Robusta,Fruits & Vegetables,Farm Fresh,1 kg,60.00,9
+P0034,Apple Shimla,Fruits & Vegetables,Farm Fresh,1 kg,180.00,6
+P0035,Onion,Fruits & Vegetables,Farm Fresh,1 kg,40.00,10
+P0036,Tomato Hybrid,Fruits & Vegetables,Farm Fresh,1 kg,35.00,10
+P0037,Potato,Fruits & Vegetables,Farm Fresh,1 kg,32.00,10
+P0038,Green Chilli,Fruits & Vegetables,Farm Fresh,100 g,10.00,7
+P0039,Ginger,Fruits & Vegetables,Farm Fresh,100 g,15.00,6
+P0040,Garlic,Fruits & Vegetables,Farm Fresh,100 g,25.00,6
+P0041,Coriander Leaves,Fruits & Vegetables,Farm Fresh,100 g,10.00,7
+P0042,Carrot,Fruits & Vegetables,Farm Fresh,500 g,30.00,6
+P0043,Cucumber,Fruits & Vegetables,Farm Fresh,500 g,25.00,5
+P0044,Green Capsicum,Fruits & Vegetables,Farm Fresh,250 g,30.00,5
+P0045,Cauliflower,Fruits & Vegetables,Farm Fresh,1 pc,40.00,4
+P0046,Cabbage,Fruits & Vegetables,Farm Fresh,1 pc,30.00,4
+P0047,Lady Finger (Bhindi),Fruits & Vegetables,Farm Fresh,250 g,25.00,5
+P0048,Brinjal,Fruits & Vegetables,Farm Fresh,500 g,30.00,4
+P0049,Lemon,Fruits & Vegetables,Farm Fresh,250 g,30.00,6
+P0050,Spinach (Palak),Fruits & Vegetables,Farm Fresh,250 g,20.00,5
+P0051,Mango Alphonso,Fruits & Vegetables,Farm Fresh,1 kg,350.00,3
+P0052,Pomegranate,Fruits & Vegetables,Farm Fresh,500 g,110.00,4
+P0053,Papaya,Fruits & Vegetables,Farm Fresh,1 pc,60.00,3
+P0054,Nagpur Orange,Fruits & Vegetables,Farm Fresh,1 kg,90.00,4
+P0055,Green Seedless Grapes,Fruits & Vegetables,Farm Fresh,500 g,70.00,4
+P0056,Watermelon,Fruits & Vegetables,Farm Fresh,1 pc,80.00,3
+P0057,Sweet Corn,Fruits & Vegetables,Farm Fresh,2 pcs,40.00,3
+P0058,White Eggs,Eggs & Meat,Farm Fresh,6 pcs,48.00,8
+P0059,White Eggs,Eggs & Meat,Farm Fresh,30 pcs,210.00,5
+P0060,Brown Eggs,Eggs & Meat,Farm Fresh,6 pcs,72.00,3
+P0061,Licious Chicken Curry Cut,Eggs & Meat,Licious,500 g,190.00,5
+P0062,Licious Chicken Breast Boneless,Eggs & Meat,Licious,450 g,260.00,3
+P0063,Licious Mutton Curry Cut,Eggs & Meat,Licious,500 g,450.00,2
+P0064,Licious Rohu Fish Curry Cut,Eggs & Meat,Licious,500 g,220.00,2
+P0065,Venky's Chicken Seekh Kebab,Eggs & Meat,Venky's,250 g,180.00,2
+P0066,Aashirvaad Whole Wheat Atta,Staples,Aashirvaad,5 kg,265.00,8
+P0067,Aashirvaad Whole Wheat Atta,Staples,Aashirvaad,10 kg,510.00,4
+P0068,Pillsbury Chakki Fresh Atta,Staples,Pillsbury,5 kg,250.00,4
+P0069,India Gate Classic Basmati Rice,Staples,India Gate,1 kg,220.00,5
+P0070,Daawat Rozana Basmati Rice,Staples,Daawat,5 kg,520.00,4
+P0071,Lalitha Sona Masoori Rice,Staples,Lalitha,10 kg,680.00,4
+P0072,Tata Sampann Toor Dal,Staples,Tata Sampann,1 kg,180.00,7
+P0073,Tata Sampann Moong Dal,Staples,Tata Sampann,1 kg,150.00,5
+P0074,Tata Sampann Chana Dal,Staples,Tata Sampann,1 kg,110.00,5
+P0075,Tata Sampann Masoor Dal,Staples,Tata Sampann,1 kg,120.00,4
+P0076,Organic Rajma Chitra,Staples,24 Mantra Organic,500 g,95.00,3
+P0077,Organic Kabuli Chana,Staples,24 Mantra Organic,500 g,90.00,3
+P0078,Fortune Sunlite Refined Sunflower Oil,Staples,Fortune,1 L,155.00,7
+P0079,Fortune Kachi Ghani Mustard Oil,Staples,Fortune,1 L,175.00,5
+P0080,Saffola Gold Blended Oil,Staples,Saffola,1 L,190.00,4
+P0081,Dhara Groundnut Oil,Staples,Dhara,1 L,190.00,3
+P0082,Tata Salt,Staples,Tata,1 kg,28.00,8
+P0083,Madhur Pure Sugar,Staples,Madhur,1 kg,55.00,7
+P0084,Fortune Besan,Staples,Fortune,500 g,60.00,4
+P0085,Aashirvaad Sooji,Staples,Aashirvaad,500 g,40.00,4
+P0086,Fortune Poha,Staples,Fortune,500 g,45.00,4
+P0087,Aashirvaad Maida,Staples,Aashirvaad,500 g,35.00,3
+P0088,Organic Jaggery Powder,Staples,24 Mantra Organic,500 g,80.00,2
+P0089,Everest Turmeric Powder,Spices & Masala,Everest,100 g,35.00,6
+P0090,Everest Kashmiri Lal Chilli Powder,Spices & Masala,Everest,100 g,75.00,5
+P0091,MDH Garam Masala,Spices & Masala,MDH,100 g,90.00,5
+P0092,Everest Coriander Powder,Spices & Masala,Everest,100 g,35.00,5
+P0093,MDH Chana Masala,Spices & Masala,MDH,100 g,80.00,3
+P0094,Everest Kitchen King Masala,Spices & Masala,Everest,100 g,85.00,4
+P0095,Catch Whole Jeera,Spices & Masala,Catch,100 g,70.00,4
+P0096,Catch Black Pepper Powder,Spices & Masala,Catch,100 g,110.00,3
+P0097,MTR Sambar Powder,Spices & Masala,MTR,100 g,60.00,4
+P0098,Everest Pav Bhaji Masala,Spices & Masala,Everest,100 g,75.00,3
+P0099,Catch Hing (Asafoetida),Spices & Masala,Catch,15 g,55.00,3
+P0100,Badshah Rajwadi Garam Masala,Spices & Masala,Badshah,100 g,85.00,2
+P0101,Lay's Classic Salted Chips,Snacks,Lay's,52 g,20.00,8
+P0102,Lay's India's Magic Masala Chips,Snacks,Lay's,52 g,20.00,9
+P0103,Kurkure Masala Munch,Snacks,Kurkure,90 g,20.00,8
+P0104,Haldiram's Aloo Bhujia,Snacks,Haldiram's,200 g,60.00,7
+P0105,Haldiram's Moong Dal Namkeen,Snacks,Haldiram's,200 g,60.00,5
+P0106,Bingo Mad Angles Achaari Masti,Snacks,Bingo,72 g,20.00,6
+P0107,Parle-G Glucose Biscuits,Snacks,Parle,250 g,25.00,9
+P0108,Britannia Good Day Cashew Cookies,Snacks,Britannia,200 g,40.00,6
+P0109,Britannia Marie Gold Biscuits,Snacks,Britannia,250 g,40.00,6
+P0110,Sunfeast Dark Fantasy Choco Fills,Snacks,Sunfeast,75 g,40.00,5
+P0111,Oreo Original Vanilla Cream Biscuits,Snacks,Cadbury,120 g,35.00,5
+P0112,Cadbury Dairy Milk Silk,Snacks,Cadbury,60 g,90.00,6
+P0113,Cadbury Dairy Milk Chocolate,Snacks,Cadbury,50 g,50.00,7
+P0114,Amul Milk Chocolate,Snacks,Amul,150 g,100.00,3
+P0115,Nestle KitKat 4 Finger,Snacks,Nestle,41.5 g,30.00,5
+P0116,Haldiram's Rasgulla,Snacks,Haldiram's,1 kg,190.00,3
+P0117,Act II Butter Popcorn,Snacks,Act II,70 g,35.00,3
+P0118,Pringles Original,Snacks,Pringles,107 g,110.00,3
+P0119,Too Yumm Multigrain Chips,Snacks,Too Yumm,54 g,20.00,4
+P0120,Unibic Choco Chip Cookies,Snacks,Unibic,75 g,30.00,3
+P0121,Tata Tea Premium,Beverages,Tata Tea,500 g,280.00,7
+P0122,Brooke Bond Red Label Tea,Beverages,Brooke Bond,500 g,290.00,7
+P0123,Taj Mahal Tea,Beverages,Brooke Bond,250 g,180.00,4
+P0124,Nescafe Classic Instant Coffee,Beverages,Nescafe,100 g,330.00,5
+P0125,Bru Instant Coffee,Beverages,Bru,100 g,240.00,4
+P0126,Tetley Green Tea,Beverages,Tetley,25 bags,160.00,3
+P0127,Coca-Cola,Beverages,Coca-Cola,750 ml,40.00,7
+P0128,Thums Up,Beverages,Thums Up,750 ml,40.00,8
+P0129,Sprite,Beverages,Sprite,750 ml,40.00,6
+P0130,Pepsi,Beverages,Pepsi,750 ml,40.00,5
+P0131,Real Fruit Power Mixed Fruit Juice,Beverages,Real,1 L,120.00,4
+P0132,Tropicana Orange Juice,Beverages,Tropicana,1 L,130.00,4
+P0133,Paper Boat Aamras,Beverages,Paper Boat,250 ml,40.00,3
+P0134,Bisleri Mineral Water,Beverages,Bisleri,1 L,20.00,9
+P0135,Bisleri Mineral Water,Beverages,Bisleri,5 L,80.00,4
+P0136,Red Bull Energy Drink,Beverages,Red Bull,250 ml,125.00,3
+P0137,Cadbury Bournvita Health Drink,Beverages,Cadbury,500 g,245.00,4
+P0138,Horlicks Classic Malt,Beverages,Horlicks,500 g,260.00,3
+P0139,Kellogg's Corn Flakes,Breakfast & Spreads,Kellogg's,475 g,190.00,5
+P0140,Kellogg's Chocos,Breakfast & Spreads,Kellogg's,375 g,200.00,4
+P0141,Quaker Oats,Breakfast & Spreads,Quaker,1 kg,199.00,4
+P0142,Saffola Masala Oats Classic,Breakfast & Spreads,Saffola,500 g,190.00,3
+P0143,Kissan Mixed Fruit Jam,Breakfast & Spreads,Kissan,500 g,170.00,4
+P0144,Kissan Fresh Tomato Ketchup,Breakfast & Spreads,Kissan,950 g,140.00,6
+P0145,Maggi Hot & Sweet Tomato Chilli Sauce,Breakfast & Spreads,Maggi,500 g,130.00,3
+P0146,Nutella Hazelnut Spread,Breakfast & Spreads,Nutella,350 g,380.00,2
+P0147,Pintola Crunchy Peanut Butter,Breakfast & Spreads,Pintola,350 g,199.00,3
+P0148,Dabur Honey,Breakfast & Spreads,Dabur,500 g,225.00,4
+P0149,Veeba Eggless Mayonnaise,Breakfast & Spreads,Veeba,250 g,99.00,3
+P0150,Maggi 2-Minute Masala Noodles,Ready to Eat & Frozen,Maggi,4 x 70 g,56.00,9
+P0151,Yippee Magic Masala Noodles,Ready to Eat & Frozen,Yippee,4 x 70 g,60.00,5
+P0152,Knorr Classic Tomato Soup,Ready to Eat & Frozen,Knorr,53 g,65.00,3
+P0153,MTR Ready to Eat Dal Makhani,Ready to Eat & Frozen,MTR,300 g,120.00,3
+P0154,MTR Rava Idli Mix,Ready to Eat & Frozen,MTR,500 g,120.00,3
+P0155,McCain French Fries,Ready to Eat & Frozen,McCain,420 g,120.00,4
+P0156,McCain Aloo Tikki,Ready to Eat & Frozen,McCain,400 g,110.00,3
+P0157,Amul Vanilla Magic Ice Cream,Ready to Eat & Frozen,Amul,1 L,180.00,4
+P0158,Kwality Wall's Cornetto Double Chocolate,Ready to Eat & Frozen,Kwality Wall's,105 ml,50.00,5
+P0159,Safal Frozen Green Peas,Ready to Eat & Frozen,Safal,500 g,95.00,4
+P0160,iD Idli Dosa Batter,Ready to Eat & Frozen,iD,1 kg,95.00,5
+P0161,Prasuma Veg Momos,Ready to Eat & Frozen,Prasuma,10 pcs,180.00,2
+P0162,Colgate Strong Teeth Toothpaste,Personal Care,Colgate,200 g,110.00,6
+P0163,Pepsodent Germicheck Toothpaste,Personal Care,Pepsodent,150 g,95.00,3
+P0164,Colgate ZigZag Toothbrush,Personal Care,Colgate,1 pc,40.00,4
+P0165,Dove Cream Beauty Bathing Bar,Personal Care,Dove,3 x 100 g,180.00,4
+P0166,Lux Soft Glow Soap,Personal Care,Lux,3 x 100 g,120.00,4
+P0167,Dettol Original Soap,Personal Care,Dettol,4 x 75 g,180.00,5
+P0168,Lifebuoy Total 10 Soap,Personal Care,Lifebuoy,4 x 100 g,140.00,4
+P0169,Head & Shoulders Anti-Dandruff Shampoo,Personal Care,Head & Shoulders,340 ml,380.00,3
+P0170,Clinic Plus Strong & Long Shampoo,Personal Care,Clinic Plus,340 ml,210.00,3
+P0171,Dove Hair Fall Rescue Shampoo,Personal Care,Dove,340 ml,360.00,3
+P0172,Parachute Pure Coconut Oil,Personal Care,Parachute,500 ml,230.00,4
+P0173,Nivea Soft Moisturising Cream,Personal Care,Nivea,100 ml,195.00,3
+P0174,Gillette Guard Razor,Personal Care,Gillette,1 pc,50.00,2
+P0175,Whisper Ultra Clean XL+,Personal Care,Whisper,30 pads,380.00,3
+P0176,Himalaya Purifying Neem Face Wash,Personal Care,Himalaya,150 ml,210.00,3
+P0177,Dettol Original Liquid Handwash,Personal Care,Dettol,200 ml,99.00,4
+P0178,Vaseline Deep Restore Body Lotion,Personal Care,Vaseline,400 ml,399.00,2
+P0179,Fogg Body Spray,Personal Care,Fogg,150 ml,250.00,2
+P0180,Surf Excel Easy Wash Detergent Powder,Household & Cleaning,Surf Excel,1 kg,140.00,6
+P0181,Ariel Matic Front Load Detergent Powder,Household & Cleaning,Ariel,1 kg,300.00,3
+P0182,Tide Plus Detergent Powder,Household & Cleaning,Tide,1 kg,120.00,4
+P0183,Rin Detergent Bar,Household & Cleaning,Rin,250 g,22.00,5
+P0184,Vim Dishwash Bar,Household & Cleaning,Vim,300 g,32.00,7
+P0185,Vim Lemon Dishwash Liquid Gel,Household & Cleaning,Vim,500 ml,115.00,4
+P0186,Harpic Power Plus Toilet Cleaner,Household & Cleaning,Harpic,1 L,210.00,4
+P0187,Lizol Citrus Floor Cleaner,Household & Cleaning,Lizol,975 ml,230.00,4
+P0188,Colin Glass Cleaner,Household & Cleaning,Colin,500 ml,110.00,2
+P0189,Comfort After Wash Fabric Conditioner,Household & Cleaning,Comfort,860 ml,240.00,2
+P0190,Good Knight Gold Flash Refill,Household & Cleaning,Good Knight,45 ml,85.00,4
+P0191,Odonil Bathroom Air Freshener Blocks,Household & Cleaning,Odonil,4 x 50 g,195.00,2
+P0192,Origami So Soft Kitchen Towel,Household & Cleaning,Origami,2 rolls,150.00,3
+P0193,Scotch-Brite Scrub Pad,Household & Cleaning,Scotch-Brite,3 pcs,60.00,4
+P0194,Ezee Garbage Bags Medium,Household & Cleaning,Ezee,30 bags,99.00,3
+P0195,Pampers Baby Dry Pants Medium,Baby Care,Pampers,56 pcs,999.00,2
+P0196,Huggies Wonder Pants Large,Baby Care,Huggies,42 pcs,799.00,2
+P0197,Johnson's Baby Powder,Baby Care,Johnson's,200 g,170.00,2
+P0198,Himalaya Gentle Baby Wipes,Baby Care,Himalaya,72 pcs,199.00,3
+P0199,Nestle Cerelac Wheat Apple,Baby Care,Nestle,300 g,230.00,2
+P0200,Johnson's Baby Shampoo,Baby Care,Johnson's,200 ml,190.00,2

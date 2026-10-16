@@ -1,6 +1,9 @@
 -- Live operational store: current stock and prices, updated by the
 -- streaming job. History and analytics live in Delta Lake, not here.
 
+-- Timestamps are stored as UTC (timestamptz); sessions display them in store time.
+ALTER DATABASE retail SET timezone TO 'Asia/Kolkata';
+
 CREATE TABLE stores (
     store_id    TEXT PRIMARY KEY,
     name        TEXT NOT NULL,
