@@ -36,7 +36,8 @@ services:
       retries: 10
 
   postgres:
-    image: postgres:17-alpine
+    build: docker/postgres  # postgres:17-alpine + pgvector
+    image: retail-postgres:17-pgvector
     container_name: retail-postgres
     ports:
       - "5432:5432"

@@ -10,6 +10,9 @@ POSTGRES_READER_DSN = os.getenv(
     "POSTGRES_READER_DSN", "postgresql://retail_reader:retail_reader@localhost:5432/retail"
 )
 
+# FastAPI service (make api), called by the dashboard's Ask tab.
+API_URL = os.getenv("RETAIL_API_URL", "http://localhost:8000")
+
 TOPIC_INVOICES = "invoices"
 TOPIC_PRICE_UPDATES = "price-updates"
 TOPIC_STOCK_RECEIPTS = "stock-receipts"

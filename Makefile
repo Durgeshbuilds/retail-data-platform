@@ -1,7 +1,7 @@
 KAFKA_TOPICS = docker compose exec kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092
 TOPICS = invoices price-updates stock-receipts
 
-.PHONY: up down reset topics list-topics psql db-migrate install seed history simulate stream stream-check dashboard peek lake lake-check lake-reset test test-fast lint
+.PHONY: up down reset topics list-topics psql db-migrate install seed history simulate stream stream-check dashboard search-index api peek lake lake-check lake-reset test test-fast lint
 
 up:  ## Start Kafka and Postgres and wait until both are healthy
 	docker compose up -d --wait
@@ -27,7 +27,8 @@ db-migrate:  ## Apply idempotent schema changes to an existing database
 	docker compose exec -T -e PGOPTIONS="-c client_min_messages=warning" postgres \
 		psql -U retail -d retail -v ON_ERROR_STOP=1 -q \
 		-f /docker-entrypoint-initdb.d/02_streaming.sql \
-		-f /docker-entrypoint-initdb.d/03_dashboard.sql
+		-f /docker-entrypoint-initdb.d/03_dashboard.sql \
+		-f /docker-entrypoint-initdb.d/04_search.sql
 
 install:  ## Create .venv on Python 3.12 and install dependencies
 	uv sync
@@ -49,6 +50,12 @@ stream-check:  ## Verify every Kafka event was applied to Postgres exactly once
 
 dashboard:  ## Streamlit dashboard on http://localhost:8501
 	uv run streamlit run src/retail/dashboard/app.py
+
+search-index:  ## Embed products into pgvector (only changed products are re-embedded)
+	uv run python -m retail.search.index
+
+api:  ## FastAPI on http://localhost:8000 (docs at /docs)
+	uv run uvicorn retail.api.main:app --port 8000
 
 TOPIC ?= invoices
 N ?= 3

@@ -4,8 +4,10 @@
 
 Live tab:    Postgres via the read-only role, refreshed every 5 seconds.
 History tab: gold Delta tables via DuckDB, as fresh as the last `make lake`.
+Ask tab:     questions answered by the FastAPI service (make api).
 """
 
+import httpx
 import pandas as pd
 import psycopg
 import streamlit as st
@@ -163,6 +165,75 @@ def history_tab(months: int, store_ids: list[str]) -> None:
         table_view(frames["categories"], revenue=RUPEES)
 
 
+EXAMPLES = [
+    "How many milks were sold last quarter?",
+    "Revenue from rice in Pune last month",
+    "Top 5 products at Koramangala this week",
+    "Best selling categories by revenue in August",
+    "How much Amul butter is left in Bengaluru?",
+    "Price of toned milk",
+]
+
+
+@st.cache_data(ttl=30, show_spinner="Thinking…")
+def ask_api(question: str, product_ids: tuple[str, ...] | None) -> dict:
+    body = {"question": question,
+            "product_ids": list(product_ids) if product_ids is not None else None}
+    response = httpx.post(f"{config.API_URL}/ask", json=body, timeout=60)
+    response.raise_for_status()
+    return response.json()
+
+
+def ask_tab() -> None:
+    st.caption("Answered by fixed query templates over the live store and the gold tables, "
+               "with no language model. Every answer shows the products it counted and the "
+               "SQL it ran. The filters above don't apply here: name a store or period in "
+               "the question.")
+    example = st.pills("Try", EXAMPLES, selection_mode="single", label_visibility="collapsed")
+    question = st.text_input("Ask a question", value=example or "",
+                             placeholder="e.g. How many milks were sold last quarter?")
+    if not question.strip():
+        return
+    try:
+        result = ask_api(question, None)
+        match = result["match"]
+        if match and (match["selected"] or match["excluded"]):
+            candidates = {p["product_id"]: f"{p['name']} ({p['unit']}) · {p['category']}"
+                          for p in match["selected"] + match["excluded"]}
+            default = [p["product_id"] for p in match["selected"]]
+            chosen = st.multiselect(
+                f"Products counted for “{match['query']}” ({match['match_type']} match)",
+                list(candidates), default=default, format_func=candidates.get,
+                key=f"products::{question}",
+                help="Untick a product to leave it out; tick an excluded one to add it.",
+            )
+            left_out = [candidates[pid] for pid in candidates if pid not in chosen]
+            if left_out:
+                st.caption("Not counted (tick in the list to add): " + "; ".join(left_out))
+            if sorted(chosen) != sorted(default):
+                result = ask_api(question, tuple(sorted(chosen)))
+    except httpx.HTTPError as exc:
+        st.warning(f"Couldn't reach the API at {config.API_URL} ({exc.__class__.__name__}). "
+                   "Start it with `make api`.")
+        return
+
+    st.markdown(f"#### {result['answer']}")
+    understood = [result["intent"].replace("_", " "), result["metric"]]
+    if result["period"]:
+        understood.append(result["period"]["description"])
+    understood.append(", ".join(result["store_ids"]) or "all stores")
+    st.caption("Understood as: " + " · ".join(understood))
+    for note in result["notes"]:
+        st.caption(f"ℹ️ {note}")
+    if result["rows"]:
+        st.dataframe(pd.DataFrame(result["rows"], columns=result["columns"]), hide_index=True,
+                     width="stretch", column_config={"revenue": RUPEES, "price": MONEY})
+    if result["sql"]:
+        with st.expander("SQL"):
+            st.code(result["sql"], language="sql")
+            st.json(result["params"], expanded=False)
+
+
 def main() -> None:
     st.title("🛒 Retail Data Platform")
     try:
@@ -179,11 +250,13 @@ def main() -> None:
     months = right.selectbox("History", [3, 6, 12], index=2,
                              format_func=lambda m: f"Last {m} months")
 
-    live, history = st.tabs(["Live", "History"])
+    live, history, ask = st.tabs(["Live", "History", "Ask"])
     with live:
         live_tab(store_ids)
     with history:
         history_tab(months, store_ids)
+    with ask:
+        ask_tab()
 
 
 main()
