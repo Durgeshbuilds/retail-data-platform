@@ -323,14 +323,6 @@ tests/                      Spark and Postgres tests use throwaway lakes and dat
 .github/workflows/ci.yml    Lint + full test suite
 ```
 
-## Roadmap
-
-1. ~~Foundation~~ — infrastructure, product master, event contracts, simulators
-2. ~~Batch~~ — bronze / silver / gold Delta tables with reconciliation
-3. ~~Streaming~~ — Spark Structured Streaming into Postgres stock and Delta
-4. ~~Dashboard~~ — Streamlit: live stock, low-stock alerts, sales, price changes
-5. ~~Semantic search and Q&A~~ — hybrid search + template Q&A, no LLM
-6. ~~Hardening~~ — data-quality suite, Health tab, CI, runbook
 
 Possible next steps: free-form questions via a local LLM (Ollama, text-to-SQL on the
 read-only role), MinIO/S3 object storage for the lake, and an orchestrator
